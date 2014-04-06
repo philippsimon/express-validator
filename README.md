@@ -3,7 +3,7 @@
 [![Build Status](https://secure.travis-ci.org/ctavan/express-validator.png)](http://travis-ci.org/ctavan/express-validator)
 
 An [express.js]( https://github.com/visionmedia/express ) middleware for
-[node-validator]( https://github.com/chriso/node-validator ).
+[node-validator]( https://github.com/chriso/validator.js ).
 
 This is basically a copy of a [gist]( https://gist.github.com/752126 ) by
 node-validator author [chriso]( https://github.com/chriso ).
@@ -28,9 +28,16 @@ app.use(expressValidator([options])); // this line must be immediately after exp
 app.post('/:urlparam', function(req, res) {
 
   // checkBody only checks req.body; none of the other req parameters
+  // Similarly checkParams only checks in req.params (URL params) and
+  // checkQuery only checks req.query (GET params).
   req.checkBody('postparam', 'Invalid postparam').notEmpty().isInt();
-  req.assert('getparam', 'Invalid getparam').isInt();
-  req.assert('urlparam', 'Invalid urlparam').isAlpha();
+  req.checkParams('urlparam', 'Invalid urlparam').isAlpha();
+  req.checkQuery('getparam', 'Invalid getparam').isInt();
+
+  // OR assert can be used to check on all 3 types of params.
+  // req.assert('postparam', 'Invalid postparam').notEmpty().isInt();
+  // req.assert('urlparam', 'Invalid urlparam').isAlpha();
+  // req.assert('getparam', 'Invalid getparam').isInt();
 
   req.sanitize('postparam').toBoolean();
 
@@ -185,30 +192,12 @@ req.assert(0, 'Not a three-digit integer.').len(3, 3).isInt();
 
 ### Extending
 
-You can extend the `Validator` and `Filter` objects to add custom validation
-and sanitization method.
-
-Custom validation which always fails. Useful for debugging or for
-adding messages manually when doing complex validation:
+You can add your own validators using `expressValidator.validator.extend(name, fn)`
 
 ```javascript
-var expressValidator = require('express-validator');
-
-expressValidator.Validator.prototype.fail = function() {
-  //You could validate against this.str, instead of just erroring out.
-
-  this.error(this.msg);
-  return this;
-};
-```
-
-Custom sanitization which lower-cases the string:
-
-```javascript
-expressValidator.Filter.prototype.toLowerCase = function(){
-  this.modify(this.str.toLowerCase());
-  return this.str;
-};
+expressValidator.validator.extend('isFinite', function (str) {
+    return isFinite(str);
+});
 ```
 
 ## Changelog
